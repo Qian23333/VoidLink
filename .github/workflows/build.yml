@@ -1,0 +1,48 @@
+name: Build IPAs
+
+on:
+  push:
+    branches: [ "Integration" ]
+  pull_request:
+    branches: [ "Integration" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build IPAs
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Checkout submodules
+        run: "git submodule update --init --recursive"
+
+      - name: Build FullScreen Version
+        run: |
+          plutil -replace UIRequiresFullScreen -bool true VoidLink/Limelight-Info.plist
+          xcodebuild -verbose -scheme VoidLink -sdk iphoneos -configuration AppStoreDistribution archive -archivePath $PWD/build/MoonlightFullScreen.xcarchive CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED="NO" CODE_SIGN_ENTITLEMENTS="" CODE_SIGNING_ALLOWED="NO"
+          mkdir -p ./build/IPA_FullScreen && mkdir -p ./build/IPA_FullScreen/Payload
+          cp -r ./build/MoonlightFullScreen.xcarchive/Products/Applications/VoidLink.app ./build/IPA_FullScreen/Payload/VoidLink.app
+          cd ./build/IPA_FullScreen && zip -r ../../build/VoidLink_FullScreen.ipa ./Payload/* && cd ../..
+
+      - name: Upload FullScreen IPA to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoidLink_FullScreen.ipa
+          path: build/VoidLink_FullScreen.ipa
+
+      - name: Build StageManager Version
+        run: |
+          plutil -replace UIRequiresFullScreen -bool false VoidLink/Limelight-Info.plist
+          xcodebuild -verbose -scheme VoidLink -sdk iphoneos -configuration AppStoreDistribution archive -archivePath $PWD/build/MoonlightStageManager.xcarchive CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED="NO" CODE_SIGN_ENTITLEMENTS="" CODE_SIGNING_ALLOWED="NO"
+          mkdir -p ./build/IPA_StageManager && mkdir -p ./build/IPA_StageManager/Payload
+          cp -r ./build/MoonlightStageManager.xcarchive/Products/Applications/VoidLink.app ./build/IPA_StageManager/Payload/VoidLink.app
+          cd ./build/IPA_StageManager && zip -r ../../build/VoidLink_StageManager.ipa ./Payload/* && cd ../..
+
+      - name: Upload StageManager IPA to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoidLink_StageManager.ipa
+          path: build/VoidLink_StageManager.ipa
