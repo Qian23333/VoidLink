@@ -1182,6 +1182,7 @@ static NSMutableSet* hostList;
         streamFrameViewController = segue.destinationViewController;
         streamFrameViewController.mainFrameViewcontroller = self;
         streamFrameViewController.streamConfig = _streamConfig;
+        streamFrameViewController.currentHost = _selectedHost;
     }
 }
 

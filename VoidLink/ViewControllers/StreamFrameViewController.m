@@ -688,17 +688,17 @@
 }
 
 -(void)disconnectAndExitStream {
-    // Create a TemporaryHost from the current stream config
-    TemporaryHost* currentHost = [[TemporaryHost alloc] init];
-    currentHost.serverMajorVersion = 7; // Default version
-    currentHost.address = self.streamConfig.host;
-    currentHost.httpsPort = self.streamConfig.httpsPort;
-    currentHost.name = self.streamConfig.host; // Use host address as name
-
-    // Disconnect and quit app when navigation completes
-    [self disconnectRemoteSessionWithCompletion:^{
-        [self.mainFrameViewcontroller quitRunningAppForHost:currentHost completion:nil];
-    }];
+    // Use the currentHost instance passed from MainFrameViewController
+    // instead of manually reconstructing it
+    if (self.currentHost) {
+        // Disconnect and quit app when navigation completes
+        [self disconnectRemoteSessionWithCompletion:^{
+            [self.mainFrameViewcontroller quitRunningAppForHost:self.currentHost completion:nil];
+        }];
+    } else {
+        // Fallback: just disconnect without quitting app if no host available
+        [self disconnectRemoteSessionWithCompletion:nil];
+    }
 }
 
 - (void)oscLayoutClosed{

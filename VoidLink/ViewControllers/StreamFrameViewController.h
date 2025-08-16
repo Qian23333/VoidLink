@@ -15,6 +15,7 @@
 #import "LayoutOnScreenControlsViewController.h"
 #import "MainFrameViewController.h"
 #import "StreamManager.h"
+#import "TemporaryHost.h"
 
 #import <AVKit/AVKit.h>
 #import <UIKit/UIKit.h>
@@ -29,6 +30,7 @@
 #endif
 @property (nonatomic) StreamManager* streamMan;
 @property (nonatomic) StreamConfiguration* streamConfig;
+@property (nonatomic) TemporaryHost* currentHost;
 @property (nonatomic, strong) AVPictureInPictureController *pipController API_AVAILABLE(ios(9.0));
 @property (nonatomic, strong) AVPictureInPictureControllerContentSource *pipContentSource API_AVAILABLE(ios(15.0)); // Needed for iOS 15+ layer-based PiP
 @property (nonatomic, assign) MainFrameViewController *mainFrameViewcontroller;
