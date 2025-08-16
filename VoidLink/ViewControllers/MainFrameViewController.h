@@ -35,5 +35,6 @@
 -(bool)isIPhonePortrait;
 #endif
 - (void)fillResolutionTable:(CGSize*)resolutionTable externalDisplayMode:(NSInteger)externalDisplayMode;
+- (void)quitRunningAppForHost:(TemporaryHost *)host completion:(void (^)(BOOL success))completion;
 
 @end

@@ -10,6 +10,7 @@
 //
 
 #import <AVKit/AVKit.h>
+#import <QuartzCore/QuartzCore.h>
 #import "StreamFrameViewController.h"
 #import "MainFrameViewController.h"
 #import "VideoDecoderRenderer.h"
@@ -23,6 +24,7 @@
 #import "VoidLink-Swift.h"
 #import "OSCProfilesManager.h"
 #import "ThemeManager.h"
+#import "TemporaryHost.h"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -685,6 +687,20 @@
     [self.pipController startPictureInPicture];
 }
 
+-(void)disconnectAndExitStream {
+    // Create a TemporaryHost from the current stream config
+    TemporaryHost* currentHost = [[TemporaryHost alloc] init];
+    currentHost.serverMajorVersion = 7; // Default version
+    currentHost.address = self.streamConfig.host;
+    currentHost.httpsPort = self.streamConfig.httpsPort;
+    currentHost.name = self.streamConfig.host; // Use host address as name
+
+    // Disconnect and quit app when navigation completes
+    [self disconnectRemoteSessionWithCompletion:^{
+        [self.mainFrameViewcontroller quitRunningAppForHost:currentHost completion:nil];
+    }];
+}
+
 - (void)oscLayoutClosed{
     // Handle the callback
     _streamView.widgetToolOpened = false;
@@ -983,6 +999,37 @@
 - (void)disconnectRemoteSession {
     Log(LOG_I, @"Settings view disconnect the session in stream view");
     [self returnToMainFrame];
+}
+
+- (void)disconnectRemoteSessionWithCompletion:(void (^)(void))completion {
+    // Reset display mode back to default
+    [self updatePreferredDisplayMode:NO];
+    if (@available(iOS 13.0, *)) {
+        [SceneDelegate clearExternalDisplayRenderView];
+    }
+
+    if (_settings.enablePIP) {
+        [self cleanupPiPController];
+    }
+
+    [_statsUpdateTimer invalidate];
+    _statsUpdateTimer = nil;
+    
+    // Navigate back to main frame and execute completion when done
+    [CATransaction begin];
+    [CATransaction setCompletionBlock:^{
+        // This will execute after the navigation animation completes
+        if (completion) {
+            completion();
+        }
+    }];
+    
+    [self.navigationController popToRootViewControllerAnimated:NO];
+    
+    [CATransaction commit];
+    
+    _extWindow = nil;
+    self.mainFrameViewcontroller.settingsExpandedInStreamView = false; // reset this flag to false
 }
 
 - (void) connectionStarted {
